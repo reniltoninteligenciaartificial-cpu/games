@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luffy Boy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0e6e6;
+            font-family: 'Fredoka', sans-serif;
+            color: #4a4a4a;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 90vw;
+            height: 90vh;
+            max-width: 800px;
+            max-height: 600px;
+            border: 8px solid #8d6d6d;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+            background-color: #f7f3f0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            background: linear-gradient(-45deg, #e0f7fa, #c0e2f5, #a0d1ec, #80c0e3);
+            background-size: 400% 400%;
+            animation: gradient-animation 15s ease infinite;
+            border-radius: 10px;
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes gradient-animation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .game-info {
+            position: absolute;
+            top: 20px;
+            width: calc(100% - 40px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2em;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .game-info span {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .game-info .emoji {
+            font-size: 1.5em;
+            margin-right: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .game-info {
+                flex-direction: column;
+                padding: 10px;
+            }
+            .game-info span {
+                margin-bottom: 5px;
+            }
+        }
+
+        .start-screen, .game-over-screen, .win-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.95);
+            z-index: 20;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .start-screen h1, .game-over-screen h1, .win-screen h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #4a4a4a;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .start-screen p, .game-over-screen p, .win-screen p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #666;
+            max-width: 80%;
+        }
+        
+        .difficulty-options button {
+            margin: 0 10px;
+        }
+
+        .play-button, .restart-button, .difficulty-button {
+            padding: 15px 30px;
+            font-size: 1.5em;
+            background-color: #ff914d;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .play-button:hover, .restart-button:hover, .difficulty-button:hover {
+            background-color: #ff7d33;
+            transform: scale(1.05);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #888;
+        }
+        
+        .luffy {
+            font-size: 3em;
+        }
+
+        #win-image-container {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="game-info">
+        <span><span class="emoji">❤️</span> Vidas: <span id="lives">3</span></span>
+        <span><span class="emoji">⏱️</span> Tempo: <span id="timer">30</span>s</span>
+        <span><span class="emoji">⭐</span> Pontuação: <span id="score">0</span></span>
+    </div>
+
+    <div class="start-screen" id="start-screen">
+        <h1>Luffy Boy</h1>
+        <p>Ajude o Luffy a chegar nos braços do seu dono antes que o tempo acabe. Evite as pulgas, barras de chocolate e coleiras! Pegue os corações para se tornar imune e ganhar carinhos.</p>
+        <div class="difficulty-options">
+            <button class="difficulty-button" id="easy-button">Fácil</button>
+            <button class="difficulty-button" id="normal-button">Normal</button>
+            <button class="difficulty-button" id="hard-button">Difícil</button>
+        </div>
+        <button class="play-button" id="play-button" style="display: none;">Jogar</button>
+        <p class="instructions">Use as setas do teclado para mover o Luffy.</p>
+    </div>
+
+    <div class="game-over-screen" id="game-over-screen" style="display: none;">
+        <h1>Game Over!</h1>
+        <p id="game-over-message">Oh não! Luffy ficou sem vidas...</p>
+        <button class="restart-button" id="restart-button">Tentar de novo</button>
+    </div>
+
+    <div class="win-screen" id="win-screen" style="display: none;">
+        <h1>Você Venceu!</h1>
+        <div id="win-image-container">
+            <svg width="150" height="150" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Person's body -->
+                <path d="M50 85 C 40 70, 60 70, 50 85 Z" fill="#4a4a4a"/>
+                <circle cx="50" cy="65" r="10" fill="#ff914d"/>
+                <path d="M50 65 C 45 40, 55 40, 50 65" stroke="#4a4a4a" stroke-width="2" fill="none"/>
+                <!-- Person's arms -->
+                <path d="M40 75 Q 30 65, 35 55" stroke="#4a4a4a" stroke-width="2" fill="none"/>
+                <path d="M60 75 Q 70 65, 65 55" stroke="#4a4a4a" stroke-width="2" fill="none"/>
+                <!-- Dog's body -->
+                <path d="M50 85 Q 45 95, 40 85 Q 35 75, 50 75 Q 65 75, 60 85 Q 55 95, 50 85 Z" fill="#8d6d6d"/>
+                <circle cx="50" cy="78" r="5" fill="#4a4a4a"/>
+                <!-- Dog's head -->
+                <path d="M50 70 C 45 60, 55 60, 50 70" fill="#8d6d6d"/>
+                <circle cx="47" cy="68" r="1.5" fill="black"/>
+                <circle cx="53" cy="68" r="1.5" fill="black"/>
+                <path d="M50 70 C 50 72, 48 72, 48 70" fill="black"/>
+                <!-- Hug effect -->
+                <path d="M35 55 Q 30 50, 40 45" stroke="#ff914d" stroke-width="2" fill="none"/>
+                <path d="M65 55 Q 70 50, 60 45" stroke="#ff914d" stroke-width="2" fill="none"/>
+            </svg>
+        </div>
+        <p>Luffy está nos braços do seu dono. Que delícia de carinho!</p>
+        <button class="restart-button" id="win-restart-button">Jogar Novamente</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+    window.onload = function() {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('start-screen');
+        const playButton = document.getElementById('play-button');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const winScreen = document.getElementById('win-screen');
+        const restartButton = document.getElementById('restart-button');
+        const winRestartButton = document.getElementById('win-restart-button');
+        const livesSpan = document.getElementById('lives');
+        const timerSpan = document.getElementById('timer');
+        const scoreSpan = document.getElementById('score');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const easyButton = document.getElementById('easy-button');
+        const normalButton = document.getElementById('normal-button');
+        const hardButton = document.getElementById('hard-button');
+
+        const GAME_DURATION = 30; // 30 segundos
+        const PLAYER_SIZE = 40;
+        const OBSTACLE_SIZE = 30;
+        const HEART_SIZE = 25;
+
+        let gameActive = false;
+        let lives = 3;
+        let score = 0;
+        let immunityTime = 0;
+        let timerInterval;
+        let timeRemaining = GAME_DURATION;
+        let difficulty = 'normal';
+        let PUPPY_SPEED = 5;
+        let OBSTACLE_BASE_SPEED = 1;
+        let HEART_BASE_SPEED = 0.5;
+
+        // Posição do Luffy e do dono
+        let luffy = {
+            x: canvas.width / 2,
+            y: canvas.height - 60,
+            dx: 0,
+            dy: 0,
+        };
+        let owner = {
+            x: canvas.width / 2,
+            y: 30,
+            width: 60,
+            height: 60,
+        };
+
+        let obstacles = [];
+        let hearts = [];
+
+        // Emojis para os elementos do jogo
+        const luffyEmoji = '🐶';
+        const ownerEmoji = '👨‍🦱';
+        const obstaclesEmoji = ['🪰', '🍫', '🦮', '📫', '🏍️'];
+        const heartEmoji = '💖';
+
+        // Redimensionar o canvas para preencher o contêiner
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            luffy.x = canvas.width / 2;
+            luffy.y = canvas.height - 60;
+            owner.x = canvas.width / 2;
+        }
+
+        // Desenhar os elementos na tela
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar o dono
+            ctx.font = `${owner.width}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(ownerEmoji, owner.x, owner.y);
+
+            // Desenhar o Luffy
+            ctx.font = `${PLAYER_SIZE}px Arial`;
+            ctx.textAlign = 'center';
+            if (immunityTime > 0) {
+                ctx.globalAlpha = 0.5; // Efeito de imune
+            }
+            ctx.fillText(luffyEmoji, luffy.x, luffy.y);
+            ctx.globalAlpha = 1.0;
+
+            // Desenhar os obstáculos
+            ctx.font = `${OBSTACLE_SIZE}px Arial`;
+            obstacles.forEach(obstacle => {
+                ctx.fillText(obstacle.emoji, obstacle.x, obstacle.y);
+            });
+
+            // Desenhar os corações
+            ctx.font = `${HEART_SIZE}px Arial`;
+            hearts.forEach(heart => {
+                ctx.fillText(heartEmoji, heart.x, heart.y);
+            });
+        }
+
+        // Atualizar a posição do Luffy
+        function update() {
+            if (!gameActive) return;
+
+            // Mover Luffy
+            luffy.x += luffy.dx * PUPPY_SPEED;
+            luffy.y += luffy.dy * PUPPY_SPEED;
+
+            // Limitar o movimento do Luffy dentro da tela
+            if (luffy.x < PLAYER_SIZE / 2) luffy.x = PLAYER_SIZE / 2;
+            if (luffy.x > canvas.width - PLAYER_SIZE / 2) luffy.x = canvas.width - PLAYER_SIZE / 2;
+            if (luffy.y < PLAYER_SIZE / 2) luffy.y = PLAYER_SIZE / 2;
+            if (luffy.y > canvas.height - PLAYER_SIZE / 2) luffy.y = canvas.height - PLAYER_SIZE / 2;
+            
+            // Mover obstáculos e corações
+            obstacles.forEach(obstacle => {
+                obstacle.y += obstacle.speed;
+            });
+            hearts.forEach(heart => {
+                heart.y += heart.speed;
+            });
+            
+            // Remover obstáculos e corações que saíram da tela
+            obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height + OBSTACLE_SIZE);
+            hearts = hearts.filter(heart => heart.y < canvas.height + HEART_SIZE);
+
+            checkCollisions();
+            checkWin();
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        // Checar colisões
+        function checkCollisions() {
+            // Colisão com obstáculos
+            obstacles.forEach((obstacle, index) => {
+                const distance = Math.sqrt(Math.pow(luffy.x - obstacle.x, 2) + Math.pow(luffy.y - obstacle.y, 2));
+                const minDistance = (PLAYER_SIZE / 2) + (OBSTACLE_SIZE / 2);
+
+                if (distance < minDistance) {
+                    if (immunityTime <= 0) { // Só perde vida se não estiver imune
+                        lives--;
+                        livesSpan.textContent = lives;
+                        obstacles.splice(index, 1);
+                        if (lives <= 0) {
+                            endGame(false, "Oh não! Luffy ficou sem vidas...");
+                        }
+                    } else {
+                        score += 10; // Ganha pontos por ser imune e passar
+                        scoreSpan.textContent = score;
+                        obstacles.splice(index, 1);
+                    }
+                }
+            });
+
+            // Colisão com corações
+            hearts.forEach((heart, index) => {
+                const distance = Math.sqrt(Math.pow(luffy.x - heart.x, 2) + Math.pow(luffy.y - heart.y, 2));
+                const minDistance = (PLAYER_SIZE / 2) + (HEART_SIZE / 2);
+
+                if (distance < minDistance) {
+                    immunityTime = 5; // 5 segundos de imunidade
+                    score += 50; // Ganha pontos por pegar o coração
+                    scoreSpan.textContent = score;
+                    hearts.splice(index, 1);
+                }
+            });
+
+            if (immunityTime > 0) {
+                immunityTime -= 1 / 60; // Reduzir o tempo de imunidade (aprox. 60 fps)
+            }
+        }
+
+        // Checar se o jogador venceu ou perdeu ao final do tempo
+        function checkWin() {
+            if (timeRemaining <= 0) {
+                if (lives > 0) {
+                    endGame(true); // Vence se o tempo acabar com vidas
+                } else {
+                    endGame(false, "O tempo acabou! Luffy não conseguiu chegar a tempo...");
+                }
+            }
+        }
+
+        // Iniciar o jogo
+        function startGame() {
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            winScreen.style.display = 'none';
+            gameActive = true;
+            lives = 3;
+            score = 0;
+            timeRemaining = GAME_DURATION;
+            livesSpan.textContent = lives;
+            timerSpan.textContent = timeRemaining;
+            scoreSpan.textContent = score;
+            luffy = {
+                x: canvas.width / 2,
+                y: canvas.height - 60,
+                dx: 0,
+                dy: 0,
+            };
+            obstacles = [];
+            hearts = [];
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                timerSpan.textContent = timeRemaining;
+                if (timeRemaining <= 0) {
+                    checkWin();
+                }
+            }, 1000);
+
+            // Criar obstáculos e corações periodicamente
+            setInterval(spawnObstacle, 1000 / OBSTACLE_BASE_SPEED);
+            setInterval(spawnHeart, 5000 / HEART_BASE_SPEED);
+
+            requestAnimationFrame(update);
+        }
+
+        // Finalizar o jogo
+        function endGame(didWin, message = "") {
+            gameActive = false;
+            clearInterval(timerInterval);
+            if (didWin) {
+                winScreen.style.display = 'flex';
+            } else {
+                gameOverScreen.style.display = 'flex';
+                gameOverMessage.textContent = message;
+            }
+        }
+
+        // Gerar um novo obstáculo
+        function spawnObstacle() {
+            if (!gameActive) return;
+            const emoji = obstaclesEmoji[Math.floor(Math.random() * obstaclesEmoji.length)];
+            const x = Math.random() * (canvas.width - OBSTACLE_SIZE) + OBSTACLE_SIZE / 2;
+            const speed = Math.random() * OBSTACLE_BASE_SPEED * 2 + OBSTACLE_BASE_SPEED;
+            obstacles.push({ x: x, y: 0, speed: speed, emoji: emoji });
+        }
+        
+        // Gerar um novo coração
+        function spawnHeart() {
+            if (!gameActive) return;
+            const x = Math.random() * (canvas.width - HEART_SIZE) + HEART_SIZE / 2;
+            const speed = Math.random() * HEART_BASE_SPEED * 2 + HEART_BASE_SPEED;
+            hearts.push({ x: x, y: 0, speed: speed });
+        }
+
+        // Definir a dificuldade
+        function setDifficulty(level) {
+            difficulty = level;
+            switch(level) {
+                case 'easy':
+                    PUPPY_SPEED = 6;
+                    OBSTACLE_BASE_SPEED = 1;
+                    HEART_BASE_SPEED = 0.5;
+                    break;
+                case 'normal':
+                    PUPPY_SPEED = 5;
+                    OBSTACLE_BASE_SPEED = 1.5;
+                    HEART_BASE_SPEED = 0.75;
+                    break;
+                case 'hard':
+                    PUPPY_SPEED = 4;
+                    OBSTACLE_BASE_SPEED = 2.5;
+                    HEART_BASE_SPEED = 1;
+                    break;
+            }
+            // Ocultar os botões de dificuldade e mostrar o botão de jogar
+            document.querySelectorAll('.difficulty-button').forEach(btn => btn.style.display = 'none');
+            playButton.style.display = 'block';
+        }
+
+        // Eventos do teclado
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            switch (e.key) {
+                case 'ArrowUp':
+                    luffy.dy = -1;
+                    break;
+                case 'ArrowDown':
+                    luffy.dy = 1;
+                    break;
+                case 'ArrowLeft':
+                    luffy.dx = -1;
+                    break;
+                case 'ArrowRight':
+                    luffy.dx = 1;
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (!gameActive) return;
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    luffy.dy = 0;
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    luffy.dx = 0;
+                    break;
+            }
+        });
+
+        // Botões de controle
+        easyButton.addEventListener('click', () => setDifficulty('easy'));
+        normalButton.addEventListener('click', () => setDifficulty('normal'));
+        hardButton.addEventListener('click', () => setDifficulty('hard'));
+        playButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        winRestartButton.addEventListener('click', startGame);
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    };
+</script>
+
+</body>
+</html>
