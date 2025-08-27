@@ -17,6 +17,7 @@
             font-family: 'Fredoka', sans-serif;
             color: #4a4a4a;
             overflow: hidden;
+            touch-action: manipulation; /* Previne o zoom da página no mobile */
         }
 
         .game-container {
@@ -92,7 +93,7 @@
             }
         }
 
-        .start-screen, .game-over-screen, .win-screen {
+        .screen {
             position: absolute;
             top: 0;
             left: 0;
@@ -108,14 +109,14 @@
             padding: 20px;
         }
         
-        .start-screen h1, .game-over-screen h1, .win-screen h1 {
+        .screen h1 {
             font-size: 3em;
             margin-bottom: 20px;
             color: #4a4a4a;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .start-screen p, .game-over-screen p, .win-screen p {
+        .screen p {
             font-size: 1.2em;
             margin-bottom: 30px;
             color: #666;
@@ -143,6 +144,17 @@
             transform: scale(1.05);
         }
 
+        .play-button:focus, .restart-button:focus, .difficulty-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px #ff7d33, 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .play-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .instructions {
             margin-top: 20px;
             font-size: 0.9em;
@@ -154,9 +166,61 @@
         }
 
         #win-image-container {
-            width: 150px;
-            height: 150px;
+            font-size: 8em; /* Aumenta o tamanho dos emojis */
             margin-bottom: 20px;
+        }
+
+        /* Removido o estilo de imagem, agora é um emoji */
+        
+        /* Controles de toque para mobile */
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 15;
+        }
+        
+        .control-row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .control-button {
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 2px solid #8d6d6d;
+            color: #4a4a4a;
+            font-size: 2em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .control-button:active {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .control-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px #8d6d6d;
+        }
+
+        .control-instructions {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: #888;
         }
     </style>
 </head>
@@ -169,53 +233,48 @@
         <span><span class="emoji">⭐</span> Pontuação: <span id="score">0</span></span>
     </div>
 
-    <div class="start-screen" id="start-screen">
+    <div class="screen" id="start-screen">
         <h1>Luffy Boy</h1>
-        <p>Ajude o Luffy a chegar nos braços do seu dono antes que o tempo acabe. Evite as pulgas, barras de chocolate e coleiras! Pegue os corações para se tornar imune e ganhar carinhos.</p>
+        <p>Ajude o Luffy a chegar nos braços do seu dono antes que o tempo acabe. Evite as pulgas, barras de chocolate e coleiras! Pegue os corações para se tornar imune e ganhar carinhos, e frango frito para ganhar pontos extras!</p>
         <div class="difficulty-options">
             <button class="difficulty-button" id="easy-button">Fácil</button>
             <button class="difficulty-button" id="normal-button">Normal</button>
             <button class="difficulty-button" id="hard-button">Difícil</button>
         </div>
         <button class="play-button" id="play-button" style="display: none;">Jogar</button>
-        <p class="instructions">Use as setas do teclado para mover o Luffy.</p>
+        <p class="instructions">Use as setas do teclado **ou os botões de controle na tela** para mover o Luffy.</p>
     </div>
 
-    <div class="game-over-screen" id="game-over-screen" style="display: none;">
+    <div class="screen" id="game-over-screen" style="display: none;">
         <h1>Game Over!</h1>
         <p id="game-over-message">Oh não! Luffy ficou sem vidas...</p>
         <button class="restart-button" id="restart-button">Tentar de novo</button>
     </div>
 
-    <div class="win-screen" id="win-screen" style="display: none;">
+    <div class="screen" id="win-screen" style="display: none;">
         <h1>Você Venceu!</h1>
         <div id="win-image-container">
-            <svg width="150" height="150" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <!-- Person's body -->
-                <path d="M50 85 C 40 70, 60 70, 50 85 Z" fill="#4a4a4a"/>
-                <circle cx="50" cy="65" r="10" fill="#ff914d"/>
-                <path d="M50 65 C 45 40, 55 40, 50 65" stroke="#4a4a4a" stroke-width="2" fill="none"/>
-                <!-- Person's arms -->
-                <path d="M40 75 Q 30 65, 35 55" stroke="#4a4a4a" stroke-width="2" fill="none"/>
-                <path d="M60 75 Q 70 65, 65 55" stroke="#4a4a4a" stroke-width="2" fill="none"/>
-                <!-- Dog's body -->
-                <path d="M50 85 Q 45 95, 40 85 Q 35 75, 50 75 Q 65 75, 60 85 Q 55 95, 50 85 Z" fill="#8d6d6d"/>
-                <circle cx="50" cy="78" r="5" fill="#4a4a4a"/>
-                <!-- Dog's head -->
-                <path d="M50 70 C 45 60, 55 60, 50 70" fill="#8d6d6d"/>
-                <circle cx="47" cy="68" r="1.5" fill="black"/>
-                <circle cx="53" cy="68" r="1.5" fill="black"/>
-                <path d="M50 70 C 50 72, 48 72, 48 70" fill="black"/>
-                <!-- Hug effect -->
-                <path d="M35 55 Q 30 50, 40 45" stroke="#ff914d" stroke-width="2" fill="none"/>
-                <path d="M65 55 Q 70 50, 60 45" stroke="#ff914d" stroke-width="2" fill="none"/>
-            </svg>
+            <span>🐶❤️👨‍🦱</span>
         </div>
         <p>Luffy está nos braços do seu dono. Que delícia de carinho!</p>
         <button class="restart-button" id="win-restart-button">Jogar Novamente</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
+
+    <!-- Controles para dispositivos de toque -->
+    <div class="controls">
+        <div class="control-row">
+            <button class="control-button" id="up-button" aria-label="Mover para cima">▲</button>
+        </div>
+        <div class="control-row">
+            <button class="control-button" id="left-button" aria-label="Mover para a esquerda">◀</button>
+            <button class="control-button" id="right-button" aria-label="Mover para a direita">▶</button>
+        </div>
+        <div class="control-row">
+            <button class="control-button" id="down-button" aria-label="Mover para baixo">▼</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -236,10 +295,17 @@
         const normalButton = document.getElementById('normal-button');
         const hardButton = document.getElementById('hard-button');
 
+        // Botões de controle de toque
+        const upButton = document.getElementById('up-button');
+        const downButton = document.getElementById('down-button');
+        const leftButton = document.getElementById('left-button');
+        const rightButton = document.getElementById('right-button');
+
         const GAME_DURATION = 30; // 30 segundos
         const PLAYER_SIZE = 40;
         const OBSTACLE_SIZE = 30;
         const HEART_SIZE = 25;
+        const CHICKEN_SIZE = 30;
 
         let gameActive = false;
         let lives = 3;
@@ -268,12 +334,14 @@
 
         let obstacles = [];
         let hearts = [];
+        let chickens = [];
 
         // Emojis para os elementos do jogo
         const luffyEmoji = '🐶';
         const ownerEmoji = '👨‍🦱';
         const obstaclesEmoji = ['🪰', '🍫', '🦮', '📫', '🏍️'];
         const heartEmoji = '💖';
+        const chickenEmoji = '🍗';
 
         // Redimensionar o canvas para preencher o contêiner
         function resizeCanvas() {
@@ -313,6 +381,12 @@
             hearts.forEach(heart => {
                 ctx.fillText(heartEmoji, heart.x, heart.y);
             });
+
+            // Desenhar os frangos fritos
+            ctx.font = `${CHICKEN_SIZE}px Arial`;
+            chickens.forEach(chicken => {
+                ctx.fillText(chickenEmoji, chicken.x, chicken.y);
+            });
         }
 
         // Atualizar a posição do Luffy
@@ -329,17 +403,21 @@
             if (luffy.y < PLAYER_SIZE / 2) luffy.y = PLAYER_SIZE / 2;
             if (luffy.y > canvas.height - PLAYER_SIZE / 2) luffy.y = canvas.height - PLAYER_SIZE / 2;
             
-            // Mover obstáculos e corações
+            // Mover obstáculos e itens
             obstacles.forEach(obstacle => {
                 obstacle.y += obstacle.speed;
             });
             hearts.forEach(heart => {
                 heart.y += heart.speed;
             });
+            chickens.forEach(chicken => {
+                chicken.y += chicken.speed;
+            });
             
-            // Remover obstáculos e corações que saíram da tela
+            // Remover elementos que saíram da tela
             obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height + OBSTACLE_SIZE);
             hearts = hearts.filter(heart => heart.y < canvas.height + HEART_SIZE);
+            chickens = chickens.filter(chicken => chicken.y < canvas.height + CHICKEN_SIZE);
 
             checkCollisions();
             checkWin();
@@ -383,6 +461,19 @@
                 }
             });
 
+            // Colisão com frango frito
+            chickens.forEach((chicken, index) => {
+                const distance = Math.sqrt(Math.pow(luffy.x - chicken.x, 2) + Math.pow(luffy.y - chicken.y, 2));
+                const minDistance = (PLAYER_SIZE / 2) + (CHICKEN_SIZE / 2);
+
+                if (distance < minDistance) {
+                    score += 100; // Pontos extras
+                    scoreSpan.textContent = score;
+                    chickens.splice(index, 1);
+                }
+            });
+
+
             if (immunityTime > 0) {
                 immunityTime -= 1 / 60; // Reduzir o tempo de imunidade (aprox. 60 fps)
             }
@@ -419,7 +510,8 @@
             };
             obstacles = [];
             hearts = [];
-
+            chickens = [];
+            
             timerInterval = setInterval(() => {
                 timeRemaining--;
                 timerSpan.textContent = timeRemaining;
@@ -428,9 +520,10 @@
                 }
             }, 1000);
 
-            // Criar obstáculos e corações periodicamente
+            // Criar obstáculos e itens periodicamente
             setInterval(spawnObstacle, 1000 / OBSTACLE_BASE_SPEED);
             setInterval(spawnHeart, 5000 / HEART_BASE_SPEED);
+            setInterval(spawnChicken, 7000 / HEART_BASE_SPEED);
 
             requestAnimationFrame(update);
         }
@@ -439,6 +532,7 @@
         function endGame(didWin, message = "") {
             gameActive = false;
             clearInterval(timerInterval);
+
             if (didWin) {
                 winScreen.style.display = 'flex';
             } else {
@@ -464,6 +558,14 @@
             hearts.push({ x: x, y: 0, speed: speed });
         }
 
+        // Gerar um novo frango frito
+        function spawnChicken() {
+            if (!gameActive) return;
+            const x = Math.random() * (canvas.width - CHICKEN_SIZE) + CHICKEN_SIZE / 2;
+            const speed = Math.random() * HEART_BASE_SPEED * 2 + HEART_BASE_SPEED;
+            chickens.push({ x: x, y: 0, speed: speed });
+        }
+
         // Definir a dificuldade
         function setDifficulty(level) {
             difficulty = level;
@@ -479,9 +581,9 @@
                     HEART_BASE_SPEED = 0.75;
                     break;
                 case 'hard':
-                    PUPPY_SPEED = 4;
-                    OBSTACLE_BASE_SPEED = 2.5;
-                    HEART_BASE_SPEED = 1;
+                    PUPPY_SPEED = 3;
+                    OBSTACLE_BASE_SPEED = 4;
+                    HEART_BASE_SPEED = 2;
                     break;
             }
             // Ocultar os botões de dificuldade e mostrar o botão de jogar
@@ -521,6 +623,28 @@
                     break;
             }
         });
+
+        // Eventos de toque para os botões do D-pad
+        upButton.addEventListener('touchstart', (e) => { e.preventDefault(); luffy.dy = -1; });
+        downButton.addEventListener('touchstart', (e) => { e.preventDefault(); luffy.dy = 1; });
+        leftButton.addEventListener('touchstart', (e) => { e.preventDefault(); luffy.dx = -1; });
+        rightButton.addEventListener('touchstart', (e) => { e.preventDefault(); luffy.dx = 1; });
+
+        upButton.addEventListener('touchend', (e) => { e.preventDefault(); luffy.dy = 0; });
+        downButton.addEventListener('touchend', (e) => { e.preventDefault(); luffy.dy = 0; });
+        leftButton.addEventListener('touchend', (e) => { e.preventDefault(); luffy.dx = 0; });
+        rightButton.addEventListener('touchend', (e) => { e.preventDefault(); luffy.dx = 0; });
+        
+        // Eventos de mouse para os botões (para desktop, caso o usuário não tenha teclado)
+        upButton.addEventListener('mousedown', () => { luffy.dy = -1; });
+        downButton.addEventListener('mousedown', () => { luffy.dy = 1; });
+        leftButton.addEventListener('mousedown', () => { luffy.dx = -1; });
+        rightButton.addEventListener('mousedown', () => { luffy.dx = 1; });
+
+        upButton.addEventListener('mouseup', () => { luffy.dy = 0; });
+        downButton.addEventListener('mouseup', () => { luffy.dy = 0; });
+        leftButton.addEventListener('mouseup', () => { luffy.dx = 0; });
+        rightButton.addEventListener('mouseup', () => { luffy.dx = 0; });
 
         // Botões de controle
         easyButton.addEventListener('click', () => setDifficulty('easy'));
