@@ -37,24 +37,10 @@
         }
 
         canvas {
-            background: linear-gradient(-45deg, #e0f7fa, #c0e2f5, #a0d1ec, #80c0e3);
-            background-size: 400% 400%;
-            animation: gradient-animation 15s ease infinite;
+            /* O plano de fundo agora é desenhado diretamente no JS */
             border-radius: 10px;
             width: 100%;
             height: 100%;
-        }
-
-        @keyframes gradient-animation {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
         }
 
         .game-info {
@@ -170,34 +156,34 @@
             margin-bottom: 20px;
         }
 
-        /* Removido o estilo de imagem, agora é um emoji */
-        
         /* Controles de toque para mobile */
         .controls {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: grid;
+            grid-template-areas:
+                ". up ."
+                "left . right"
+                ". down .";
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            width: 90vw; /* Usa a largura total da tela */
+            max-width: 400px;
             z-index: 15;
+            justify-items: center;
+            align-items: center;
         }
         
-        .control-row {
-            display: flex;
-            justify-content: center;
-        }
-
         .control-button {
-            width: 60px;
-            height: 60px;
-            margin: 5px;
-            border-radius: 10px;
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
             background-color: rgba(255, 255, 255, 0.5);
             border: 2px solid #8d6d6d;
             color: #4a4a4a;
-            font-size: 2em;
+            font-size: 2.5em;
             cursor: pointer;
             display: flex;
             justify-content: center;
@@ -206,7 +192,23 @@
             -webkit-user-select: none;
             transition: background-color 0.2s, box-shadow 0.2s;
         }
-
+        
+        .control-button.up-button { grid-area: up; }
+        .control-button.down-button { grid-area: down; }
+        .control-button.left-button { grid-area: left; }
+        .control-button.right-button { grid-area: right; }
+        
+        /* Ajustar a posição dos botões laterais para as bordas */
+        .controls .left-button {
+            justify-self: start;
+            margin-left: 20px;
+        }
+        
+        .controls .right-button {
+            justify-self: end;
+            margin-right: 20px;
+        }
+        
         .control-button:active {
             background-color: rgba(255, 255, 255, 0.8);
         }
@@ -264,16 +266,10 @@
 
     <!-- Controles para dispositivos de toque -->
     <div class="controls">
-        <div class="control-row">
-            <button class="control-button" id="up-button" aria-label="Mover para cima">▲</button>
-        </div>
-        <div class="control-row">
-            <button class="control-button" id="left-button" aria-label="Mover para a esquerda">◀</button>
-            <button class="control-button" id="right-button" aria-label="Mover para a direita">▶</button>
-        </div>
-        <div class="control-row">
-            <button class="control-button" id="down-button" aria-label="Mover para baixo">▼</button>
-        </div>
+        <button class="control-button up-button" id="up-button" aria-label="Mover para cima">▲</button>
+        <button class="control-button left-button" id="left-button" aria-label="Mover para a esquerda">◀</button>
+        <button class="control-button right-button" id="right-button" aria-label="Mover para a direita">▶</button>
+        <button class="control-button down-button" id="down-button" aria-label="Mover para baixo">▼</button>
     </div>
 </div>
 
@@ -317,11 +313,12 @@
         let PUPPY_SPEED = 5;
         let OBSTACLE_BASE_SPEED = 1;
         let HEART_BASE_SPEED = 0.5;
+        const SIDEWALK_HEIGHT = 80;
 
         // Posição do Luffy e do dono
         let luffy = {
             x: canvas.width / 2,
-            y: canvas.height - 60,
+            y: canvas.height - SIDEWALK_HEIGHT - 30, // Posiciona Luffy acima da calçada
             dx: 0,
             dy: 0,
         };
@@ -337,7 +334,7 @@
         let chickens = [];
 
         // Emojis para os elementos do jogo
-        const luffyEmoji = '🐶';
+        const luffyEmoji = '�';
         const ownerEmoji = '👨‍🦱';
         const obstaclesEmoji = ['🪰', '🍫', '🦮', '📫', '🏍️'];
         const heartEmoji = '💖';
@@ -348,13 +345,21 @@
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
             luffy.x = canvas.width / 2;
-            luffy.y = canvas.height - 60;
+            luffy.y = canvas.height - SIDEWALK_HEIGHT - 30;
             owner.x = canvas.width / 2;
         }
 
         // Desenhar os elementos na tela
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Desenha o gramado
+            ctx.fillStyle = '#8BC34A';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Desenha a calçada na parte inferior
+            ctx.fillStyle = '#bdbdbd';
+            ctx.fillRect(0, canvas.height - SIDEWALK_HEIGHT, canvas.width, SIDEWALK_HEIGHT);
 
             // Desenhar o dono
             ctx.font = `${owner.width}px Arial`;
@@ -397,11 +402,16 @@
             luffy.x += luffy.dx * PUPPY_SPEED;
             luffy.y += luffy.dy * PUPPY_SPEED;
 
-            // Limitar o movimento do Luffy dentro da tela
-            if (luffy.x < PLAYER_SIZE / 2) luffy.x = PLAYER_SIZE / 2;
-            if (luffy.x > canvas.width - PLAYER_SIZE / 2) luffy.x = canvas.width - PLAYER_SIZE / 2;
-            if (luffy.y < PLAYER_SIZE / 2) luffy.y = PLAYER_SIZE / 2;
-            if (luffy.y > canvas.height - PLAYER_SIZE / 2) luffy.y = canvas.height - PLAYER_SIZE / 2;
+            // Limitar o movimento do Luffy dentro da tela (agora com a calçada)
+            const minX = PLAYER_SIZE / 2;
+            const maxX = canvas.width - PLAYER_SIZE / 2;
+            const minY = PLAYER_SIZE / 2;
+            const maxY = canvas.height - SIDEWALK_HEIGHT - PLAYER_SIZE / 2;
+            
+            if (luffy.x < minX) luffy.x = minX;
+            if (luffy.x > maxX) luffy.x = maxX;
+            if (luffy.y < minY) luffy.y = minY;
+            if (luffy.y > maxY) luffy.y = maxY;
             
             // Mover obstáculos e itens
             obstacles.forEach(obstacle => {
@@ -504,7 +514,7 @@
             scoreSpan.textContent = score;
             luffy = {
                 x: canvas.width / 2,
-                y: canvas.height - 60,
+                y: canvas.height - SIDEWALK_HEIGHT - 30,
                 dx: 0,
                 dy: 0,
             };
@@ -661,3 +671,4 @@
 
 </body>
 </html>
+�
